@@ -67,7 +67,7 @@ def install_ffmpeg():
         return False
 
 
-def model_fn(model_dir):
+def model_fn():
     """Load pre-trained HTDemucs model
     
     Returns:
