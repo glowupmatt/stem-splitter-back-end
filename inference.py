@@ -77,62 +77,62 @@ def model_fn():
     model.eval()
     return model.to(device)
 
-def input_fn(request_body, request_content_type):
-    """Deserialize and preprocess audio input"""
-    if request_content_type == 'application/json':
-        input_data = json.loads(request_body)
-        audio_tensor = torch.tensor(input_data['audio'], dtype=torch.float32)
+# def input_fn(request_body, request_content_type):
+#     """Deserialize and preprocess audio input"""
+#     if request_content_type == 'application/json':
+#         input_data = json.loads(request_body)
+#         audio_tensor = torch.tensor(input_data['audio'], dtype=torch.float32)
         
-    elif request_content_type in ['audio/wav', 'audio/x-wav']:
-        # Handle WAV input
-        audio_data, sr = sf.read(io.BytesIO(request_body))
-        audio_tensor = torch.tensor(audio_data, dtype=torch.float32)
-        if sr != SAMPLE_RATE:
-            resampler = torchaudio.transforms.Resample(sr, SAMPLE_RATE)
-            audio_tensor = resampler(audio_tensor)
+#     elif request_content_type in ['audio/wav', 'audio/x-wav']:
+#         # Handle WAV input
+#         audio_data, sr = sf.read(io.BytesIO(request_body))
+#         audio_tensor = torch.tensor(audio_data, dtype=torch.float32)
+#         if sr != SAMPLE_RATE:
+#             resampler = torchaudio.transforms.Resample(sr, SAMPLE_RATE)
+#             audio_tensor = resampler(audio_tensor)
         
 
-        print(f"Loaded audio with sample rate: {sr}")
+#         print(f"Loaded audio with sample rate: {sr}")
         
-    elif request_content_type == 'audio/mpeg':
-        import tempfile
-        import os
+#     elif request_content_type == 'audio/mpeg':
+#         import tempfile
+#         import os
         
-        # Save MP3 data to temporary file
-        with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as temp_file:
-            temp_file.write(request_body)
-            temp_file_path = temp_file.name
+#         # Save MP3 data to temporary file
+#         with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as temp_file:
+#             temp_file.write(request_body)
+#             temp_file_path = temp_file.name
         
-        try:
-            # Use torchaudio's MP3 backend
-            audio_tensor, sr = torchaudio.load(
-                temp_file_path,
-                format="mp3",
-                normalize=True  # Normalize audio to [-1, 1]
-            )
-            print(f"Loaded audio with sample rate: {sr}")
-            if sr != SAMPLE_RATE:
-                resampler = torchaudio.transforms.Resample(sr, SAMPLE_RATE)
-                audio_tensor = resampler(audio_tensor)
-        finally:
-            # Clean up temporary file
-            try:
-                os.unlink(temp_file_path)
-            except:
-                pass  # Ignore deletion errors
-    else:
-        raise ValueError(
-            f"Unsupported content type: {request_content_type}. "
-            "Supported types are: application/json, audio/wav, audio/mpeg"
-        )
+#         try:
+#             # Use torchaudio's MP3 backend
+#             audio_tensor, sr = torchaudio.load(
+#                 temp_file_path,
+#                 format="mp3",
+#                 normalize=True  # Normalize audio to [-1, 1]
+#             )
+#             print(f"Loaded audio with sample rate: {sr}")
+#             if sr != SAMPLE_RATE:
+#                 resampler = torchaudio.transforms.Resample(sr, SAMPLE_RATE)
+#                 audio_tensor = resampler(audio_tensor)
+#         finally:
+#             # Clean up temporary file
+#             try:
+#                 os.unlink(temp_file_path)
+#             except:
+#                 pass  # Ignore deletion errors
+#     else:
+#         raise ValueError(
+#             f"Unsupported content type: {request_content_type}. "
+#             "Supported types are: application/json, audio/wav, audio/mpeg"
+#         )
     
-    # Ensure stereo audio
-    if audio_tensor.dim() == 1:
-        audio_tensor = audio_tensor.unsqueeze(0).repeat(2, 1)
-    elif audio_tensor.shape[0] == 1:
-        audio_tensor = audio_tensor.repeat(2, 1)
+#     # Ensure stereo audio
+#     if audio_tensor.dim() == 1:
+#         audio_tensor = audio_tensor.unsqueeze(0).repeat(2, 1)
+#     elif audio_tensor.shape[0] == 1:
+#         audio_tensor = audio_tensor.repeat(2, 1)
     
-    return audio_tensor.to(device)
+#     return audio_tensor.to(device)
 
 def predict_fn(input_data, model):
     """Model inference for audio source separation

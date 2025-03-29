@@ -1,10 +1,8 @@
 import os
-import torch
 import time
 import torchaudio
-import subprocess
 import json
-from inference import model_fn, input_fn, predict_fn, output_fn
+from inference import model_fn, predict_fn, output_fn
 from pathlib import Path
 import boto3
 import io
@@ -96,7 +94,7 @@ def test_model_locally(audio_path, output_format='wav', mode='2'):
         dict: Dictionary of stem names and their S3 URLs
     """
     print("Loading pre-trained HTDemucs model...")
-    model = model_fn(None)
+    model = model_fn()
     
     original_sample_rate = get_audio_info(audio_path)
     print(f"Original sample rate: {original_sample_rate} Hz")
