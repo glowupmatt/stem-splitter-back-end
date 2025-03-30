@@ -1,7 +1,5 @@
 from dotenv import load_dotenv
 
-
-import os
 import sys
 from pathlib import Path
 
@@ -10,7 +8,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 # Third-party imports
 from flask import Flask
-from flask_cors import CORS
+# from flask_cors import CORS
 
 # Local imports
 from server.api.separate_routes import separate_routes
@@ -22,14 +20,14 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 load_dotenv()
 
-CORS(app, resources={
-    r"/api/*": {
-        "origins": "*",
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Accept"],
-        "supports_credentials": True
-    }
-})
+# CORS(app, resources={
+#     r"/api/*": {
+#         "origins": "*",
+#         "methods": ["GET", "POST", "OPTIONS"],
+#         "allow_headers": ["Content-Type", "Accept"],
+#         "supports_credentials": True
+#     }
+# })
 # Register blueprints
 app.register_blueprint(separate_routes, url_prefix="/api/separate")
 app.register_blueprint(download_stem_routes, url_prefix="/api/download_stem")

@@ -22,11 +22,11 @@ COPY . .
 # Create directories for Demucs output
 RUN mkdir -p separated/htdemucs
 
-# Expose port 5000 for Flask
-EXPOSE 5000
+# Expose port 8080 for Cloud Run
+EXPOSE 8080
 
 # Set Python path
 ENV PYTHONPATH=/var/app
 
-# Switch to Gunicorn with longer timeout
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "run:app", "--workers", "2", "--timeout", "600", "--max-requests", "1"]
+# Switch to Gunicorn with port 8080
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "main:app", "--workers", "2", "--timeout", "600"]

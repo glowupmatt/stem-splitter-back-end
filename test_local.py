@@ -4,83 +4,16 @@ import torchaudio
 import json
 from inference import model_fn, predict_fn, output_fn
 from pathlib import Path
-import boto3
-import io
+from utils.upload_to_s3 import upload_to_s3
+from utils.convert_m4a_to_mp3 import convert_m4a_to_mp3
+from utils.get_audio_info import get_audio_info
 import uuid
 from dotenv import load_dotenv
 import tempfile
 
 load_dotenv()
 
-def get_audio_info(input_path):
-    """Get audio sample rate using ffprobe"""
-    import subprocess
-    import json
-    
-    cmd = [
-        'ffprobe',
-        '-v', 'quiet',
-        '-print_format', 'json',
-        '-show_streams',
-        input_path
-    ]
-    
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    data = json.loads(result.stdout)
-    
-    for stream in data['streams']:
-        if stream['codec_type'] == 'audio':
-            return int(stream['sample_rate'])
-    
-    return 44100  # fallback to CD quality if detection fails
 
-def convert_m4a_to_mp3(input_path, output_path):
-    """Convert M4A file to MP3 format using ffmpeg"""
-    import subprocess
-        
-    # Get original sample rate
-    original_sample_rate = get_audio_info(input_path)
-    print(f"Detected original sample rate: {original_sample_rate} Hz")
-    
-    try:
-        # Use ffmpeg to convert M4A to MP3
-        subprocess.run([
-            'ffmpeg',
-            '-i', input_path,  # Input file
-            '-acodec', 'libmp3lame',  # Use MP3 codec
-            '-ab', '320k',  # Set bitrate to 320kbps
-            '-ar', str(original_sample_rate),
-            '-y',  # Overwrite output file if it exists
-            output_path
-        ], check=True)
-        return True, original_sample_rate
-    except subprocess.CalledProcessError as e:
-        print(f"Error converting file: {str(e)}")
-        return False, None
-
-def upload_to_s3(file_content, filename, bucket_name=None):
-    """Upload a file to S3 and return the public URL"""
-    if bucket_name is None:
-        bucket_name = os.getenv('AWS_BUCKET_NAME')
-    
-    s3_client = boto3.client('s3')
-    safe_filename = f"{uuid.uuid4().hex}_{filename}"
-    s3_path = f"stems/{safe_filename}"
-    
-    # Upload to S3
-    s3_upload_buffer = io.BytesIO(file_content)
-    s3_client.upload_fileobj(
-        s3_upload_buffer,
-        bucket_name,
-        s3_path,
-        ExtraArgs={
-            'ContentType': 'audio/mpeg',
-            'ACL': 'public-read'
-        }
-    )
-    
-    # Return the public URL
-    return f"https://{bucket_name}.s3.{os.getenv('AWS_DEFAULT_REGION')}.amazonaws.com/{s3_path}"
 
 def test_model_locally(audio_path, output_format='wav', mode='2'):
     """Test the model locally with a sample audio file and upload results to S3

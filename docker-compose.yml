@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   web:
     build: .
     ports:
-      - "5000:5000"
+      - "8080:8080"
     environment:
       - CORS_ORIGIN=${CORS_ORIGIN}
       - CORS_METHODS=${CORS_METHODS}
