@@ -42,6 +42,6 @@ def download_file(file_url):
             mimetype='audio/mpeg',
             as_attachment=True,
             download_name=filename
-        )
+        ), 200
     except Exception as e:
         return jsonify({"error": f"File download failed: {str(e)}"}), 404

@@ -19,9 +19,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-# Create directories for Demucs output
-RUN mkdir -p separated/htdemucs
-
 # Expose port 8080 for Cloud Run
 EXPOSE 8080
 

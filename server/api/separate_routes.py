@@ -1,6 +1,6 @@
 import sys
 import os
-import tempfile
+import torch
 import shutil
 from pathlib import Path
 from time import perf_counter
@@ -10,6 +10,8 @@ from werkzeug.utils import secure_filename
 import demucs.separate
 from dotenv import load_dotenv
 from utils.install_ffmpeg import install_ffmpeg, check_ffmpeg
+import requests  # Add this import for handling URL downloads
+import urllib.parse  # Add this for parsing URLs
 sys.path.append(str(Path(__file__).parent.parent))
 
 load_dotenv()
@@ -18,6 +20,17 @@ separate_routes = Blueprint("audio", __name__)
 ALLOWED_EXTENSIONS = {'wav', 'mp3'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Add function to download file from URL
+def download_file_from_url(url, download_path):
+    response = requests.get(url, stream=True)
+    response.raise_for_status()  # Raise exception for 4XX/5XX responses
+    
+    with open(download_path, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+    
+    return download_path
 
 @separate_routes.route("/", methods=['POST'])
 def separate_audio():
@@ -30,47 +43,47 @@ def separate_audio():
             return jsonify({"error": f"Failed to install FFmpeg: {str(e)}"}), 500
     else:
         print("FFmpeg is already installed.")
+        
+        
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Using device: {device}")
     
     start_time = perf_counter()
     bucket_name = os.getenv('AWS_BUCKET_NAME')
     
-    if 'file' not in request.files:
-        return jsonify({"error": "No file provided"}), 400
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-    if not allowed_file(file.filename):
-        return jsonify({"error": "Invalid file type"}), 400
-
+    # Check for URL parameter instead of file
+    url = request.form.get('link')
+    if not url:
+        return jsonify({"error": "No audio URL provided"}), 400
+    
     try:
+        # Extract filename from URL
+        parsed_url = urllib.parse.urlparse(url)
+        filename = os.path.basename(parsed_url.path)
+        
+        if not filename or not allowed_file(filename):
+            # If URL doesn't have a valid filename with extension, create a default one
+            extension = '.mp3'  # Default extension
+            if '.' in filename:
+                extension = '.' + filename.rsplit('.', 1)[1].lower()
+                if extension not in ['.mp3', '.wav']:
+                    extension = '.mp3'
+            
+            filename = f"download{extension}"
+        
         # Create a secure filename
-        safe_filename = secure_filename(file.filename)
+        safe_filename = secure_filename(filename)
         
         # Create temp directory if it doesn't exist
         temp_dir = Path('temp')
         temp_dir.mkdir(exist_ok=True)
         
-        # Create temporary file with proper extension in our temp directory
+        # Download file to temp directory
         temp_path = temp_dir / safe_filename
-        file.save(str(temp_path))
-
+        download_file_from_url(url, str(temp_path))
+        
         # Upload original to S3
         s3_client = boto3.client('s3')
-        s3_path = f"originals/{safe_filename}"
-        
-        with open(temp_path, 'rb') as file_data:
-            s3_client.upload_fileobj(
-                file_data,
-                bucket_name,
-                s3_path,
-                ExtraArgs={
-                    'ContentType': 'audio/mpeg',
-                    'ACL': 'public-read'
-                }
-            )
-
-        # Generate URL for original file
-        original_url = f"https://{bucket_name}.s3.{os.getenv('AWS_DEFAULT_REGION')}.amazonaws.com/{s3_path}"
 
         # Process stems
         stems_files = {}
@@ -81,13 +94,16 @@ def separate_audio():
         try:
             mode = request.form.get('mode', '2')
             
-            # Build the command arguments
+            # Build the command arguments with GPU support
             cmd_args = ["--mp3"]
+            if device == "cuda":
+                cmd_args.extend(["--device", "cuda"])  # Enable GPU
             if mode == '2':
                 cmd_args.extend(["--two-stems", "vocals"])
             cmd_args.extend(["-n", "htdemucs", str(temp_path)])
             
             # Run the separation
+            print(f"Running separation with args: {cmd_args}")
             demucs.separate.main(cmd_args)
 
             # Get the output directory path
@@ -149,7 +165,6 @@ def separate_audio():
             "downloads": download_links,
             "processing_time": perf_counter() - start_time,
             "separation_time": separation_time,
-            "original_file": original_url
         })
 
     except Exception as e:

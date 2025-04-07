@@ -9,6 +9,8 @@ sys.path.append(str(Path(__file__).parent.parent))
 # Third-party imports
 from flask import Flask
 # from flask_cors import CORS
+app = Flask(__name__)
+
 
 # Local imports
 from server.api.separate_routes import separate_routes
@@ -16,7 +18,6 @@ from server.api.download_stem_routes import download_stem_routes
 from server.api.clean_bucket_routes import clean_bucket_routes
 
 # Initialize Flask app
-app = Flask(__name__)
 app.url_map.strict_slashes = False
 load_dotenv()
 
