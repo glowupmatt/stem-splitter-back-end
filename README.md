@@ -21,10 +21,10 @@ This repository contains the backend server for the Stem Splitter application. T
 ## ENV File
 For this project I used AWS but you can replace with whatever cloud service you decide to go with.
 
- - AWS_ACCESS_KEY_ID=
- - AWS_SECRET_ACCESS_KEY=
- - AWS_BUCKET_NAME=
- - AWS_DEFAULT_REGION=
+ - AWS_ACCESS_KEY_ID
+ - AWS_SECRET_ACCESS_KEY
+ - AWS_BUCKET_NAME
+ - AWS_DEFAULT_REGION
 
 ## API Endpoints
 
