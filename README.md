@@ -2,6 +2,9 @@
 
 This repository contains the backend server for the Stem Splitter application. The server processes audio files to split them into stems using Demucs, PyTorch, Torchaudio, and FFmpeg. The processed audio files are stored in AWS S3 buckets, and downloadable links are returned for the frontend to display the audio waves.
 
+Front End Code:
+ - https://github.com/glowupmatt/splitter-fe
+
 ## Features
 
 - **Audio Processing**: Utilizes Demucs with PyTorch, Torchaudio, and FFmpeg to split audio files into stems.
