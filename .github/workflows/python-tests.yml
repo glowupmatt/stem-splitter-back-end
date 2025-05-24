@@ -10,6 +10,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    name: Run Python Tests
+    
     steps:
     - uses: actions/checkout@v3
     
