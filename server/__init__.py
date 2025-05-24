@@ -3,12 +3,9 @@ from dotenv import load_dotenv
 import sys
 from pathlib import Path
 
-# Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-# Third-party imports
 from flask import Flask
-# from flask_cors import CORS
 app = Flask(__name__)
 
 

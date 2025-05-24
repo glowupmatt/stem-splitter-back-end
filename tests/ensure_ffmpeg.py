@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 from flask import Flask
 
-# Add the parent directory to the path to import from server
 sys.path.append(str(Path(__file__).parent.parent))
 from server.api.separate_routes import ensure_ffmpeg
 
@@ -26,13 +25,10 @@ def test_ffmpeg_already_installed(mock_install_ffmpeg, mock_check_ffmpeg):
 @patch('server.api.separate_routes.check_ffmpeg')
 @patch('server.api.separate_routes.install_ffmpeg')
 def test_ffmpeg_successful_installation(mock_install_ffmpeg, mock_check_ffmpeg):
-    # Arrange
     mock_check_ffmpeg.return_value = False
     
-    # Act
     result = ensure_ffmpeg()
     
-    # Assert
     assert result is True
     mock_check_ffmpeg.assert_called_once()
     mock_install_ffmpeg.assert_called_once()
@@ -40,17 +36,14 @@ def test_ffmpeg_successful_installation(mock_install_ffmpeg, mock_check_ffmpeg):
 @patch('server.api.separate_routes.check_ffmpeg')
 @patch('server.api.separate_routes.install_ffmpeg')
 def test_ffmpeg_installation_fails(mock_install_ffmpeg, mock_check_ffmpeg):
-    # Arrange
     mock_check_ffmpeg.return_value = False
     mock_install_ffmpeg.side_effect = Exception("Installation error")
     
-    # Create a Flask context for jsonify to work
+
     app = Flask(__name__)
     with app.app_context():
-        # Act
         result = ensure_ffmpeg()
         
-        # Assert
         assert result[1] == 500
         assert "Failed to install FFmpeg" in result[0].json["error"]
         mock_check_ffmpeg.assert_called_once()
