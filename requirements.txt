@@ -1,13 +1,11 @@
---find-links https://download.pytorch.org/whl/cu118
-torch
-torchaudio
-numpy>=1.21.0
+numpy>=1.21.0,<2.0.0
 soundfile>=0.10.3
 demucs>=4.0.0
 ffmpeg-python>=0.2.0
 boto3>=1.26.0
 python-dotenv>=1.0.0
-flask>=2.0.0
+flask
 Werkzeug>=2.0.0
 gunicorn
 requests
+pytest
