@@ -40,7 +40,7 @@ def ensure_ffmpeg():
             print("FFmpeg installed successfully.")
             return True
         except Exception as e:
-            return jsonify({"error": f"Failed to install FFmpeg: {str(e)}"}), 500
+            return jsonify({"error": f"Failed to install FFmpeg: {str(e)}"}), 300
     else:
         print("FFmpeg is already installed.")
         return True
